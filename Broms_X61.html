@@ -2,18 +2,21 @@
 <html lang="sv">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Bromsberäkning</title>
   <meta name="theme-color" content="#003366">
+  <meta name="apple-mobile-web-app-capable" content="yes">
 
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; background: #f4f4f4; }
-    .container { max-width: 540px; margin: 0 auto; background: white; padding: 25px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
-    h1 { text-align: center; color: #003366; }
-    label { display: block; margin: 18px 0 8px; font-weight: bold; }
-    select { width: 100%; padding: 14px; font-size: 18px; border: 2px solid #ccc; border-radius: 10px; }
-    button { width: 100%; padding: 16px; font-size: 20px; background: #003366; color: white; border: none; border-radius: 10px; margin-top: 25px; font-weight: bold; }
-    .result { margin-top: 25px; padding: 20px; background: #e6f0ff; border-radius: 12px; font-size: 19px; min-height: 180px; }
+    body { font-family: -apple-system, Arial, sans-serif; margin:0; padding:20px; background:#f4f4f4; }
+    .container { max-width:540px; margin:0 auto; background:white; padding:25px; border-radius:16px; box-shadow:0 4px 20px rgba(0,0,0,0.1); }
+    h1 { text-align:center; color:#003366; }
+    label { display:block; margin:18px 0 8px; font-weight:bold; font-size:17px; }
+    select { width:100%; padding:14px; font-size:18px; border:2px solid #ccc; border-radius:10px; }
+    button { width:100%; padding:16px; font-size:20px; background:#003366; color:white; border:none; border-radius:10px; margin-top:25px; font-weight:bold; }
+    .result { margin-top:25px; padding:20px; background:#e6f0ff; border-radius:12px; font-size:19px; line-height:1.6; min-height:180px; }
+    .good { color:#2e7d32; font-weight:bold; }
+    .warning { color:#d32f2f; font-weight:bold; }
   </style>
 </head>
 <body>
@@ -46,37 +49,50 @@
   </div>
 
   <script>
-    function berakna() {
-      alert("✅ JavaScript fungerar!");   // Test för att se om koden körs
+    const data = {
+      1: {0:{b:151,r:112},1:{b:120,r:91},2:{b:89,r:69}},
+      2: {0:{b:151,r:112},1:{b:135,r:101},2:{b:120,r:91},3:{b:104,r:80},4:{b:89,r:69}},
+      3: {0:{b:151,r:112},1:{b:141,r:105},2:{b:131,r:98},3:{b:120,r:91},4:{b:110,r:84},5:{b:100,r:77},6:{b:89,r:69}}
+    };
 
+    function padRet(ret) { return ret.toString().padStart(3, '0'); }
+
+    function getSTH(tagset, broms) {
+      if (tagset == 1) {
+        if (broms >= 139) return 160; if (broms >= 119) return 130;
+        if (broms >= 110) return 120; if (broms >= 86) return 110; return 0;
+      }
+      if (tagset == 2) {
+        if (broms >= 147) return 160; if (broms >= 125) return 130;
+        if (broms >= 104) return 120; if (broms >= 86) return 110;
+        if (broms >= 80) return 100; return 0;
+      }
+      if (tagset == 3) {
+        if (broms >= 130) return 130; if (broms >= 108) return 120;
+        if (broms >= 86) return 110; if (broms >= 83) return 100;
+        if (broms >= 82) return 90; if (broms >= 67) return 80; return 0;
+      }
+      return 0;
+    }
+
+    function berakna() {
       const tagset = parseInt(document.getElementById('tagset').value);
       const avstangda = parseInt(document.getElementById('avstangda').value) || 0;
+      const entry = data[tagset] ? data[tagset][avstangda] : null;
 
       let html = `<strong>Tågset:</strong> ${tagset} st<br>`;
       html += `<strong>Avstängda boggier:</strong> ${avstangda} st<br><br>`;
 
-      // Dina värden
-      const data = {
-        1: {0:{b:151,r:112},1:{b:120,r:91},2:{b:89,r:69}},
-        2: {0:{b:151,r:112},1:{b:135,r:101},2:{b:120,r:91},3:{b:104,r:80},4:{b:89,r:69}},
-        3: {0:{b:151,r:112},1:{b:141,r:105},2:{b:131,r:98},3:{b:120,r:91},4:{b:110,r:84},5:{b:100,r:77},6:{b:89,r:69}}
-      };
-
-      const entry = data[tagset] ? data[tagset][avstangda] : null;
       if (entry) {
-        html += `<strong>Bromsprocent:</strong> ${entry.b} %<br>`;
-        html += `<strong>Retardationstal:</strong> ${entry.r.toString().padStart(3,'0')}<br>`;
-        html += `<strong>STH:</strong> ${getSTH(tagset, entry.b)} km/h`;
+        const sth = getSTH(tagset, entry.b);
+        html += `<strong>Bromsprocent:</strong> <span class="${entry.b >= 100 ? 'good' : 'warning'}">${entry.b} %</span><br>`;
+        html += `<strong>Retardationstal:</strong> ${padRet(entry.r)}<br>`;
+        html += `<strong>STH:</strong> <span class="${sth >= 130 ? 'good' : 'warning'}">${sth} km/h</span>`;
+      } else {
+        html += "Inga värden för denna kombination.";
       }
 
       document.getElementById('resultat').innerHTML = html;
-    }
-
-    function getSTH(tagset, broms) {
-      if (tagset == 1) { if (broms >= 139) return 160; if (broms >= 119) return 130; if (broms >= 110) return 120; if (broms >= 86) return 110; }
-      if (tagset == 2) { if (broms >= 147) return 160; if (broms >= 125) return 130; if (broms >= 104) return 120; if (broms >= 86) return 110; if (broms >= 80) return 100; }
-      if (tagset == 3) { if (broms >= 130) return 130; if (broms >= 108) return 120; if (broms >= 86) return 110; if (broms >= 83) return 100; if (broms >= 82) return 90; if (broms >= 67) return 80; }
-      return 0;
     }
   </script>
 </body>
